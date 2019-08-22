@@ -25,12 +25,9 @@ public class World : MonoBehaviour
     // if (player == null) player = GameObject.Find("Player").GetComponent<Player>();
     // if (noise == null) noise = new SimplexNoiseGenerator(seed);
 
-    // Debug.Log("Destroying old chunks...");
+    Debug.Log("Starting Map Generation...");
 
-    for (int i = transform.childCount - 1; i >= 0; i--)
-    {
-      DestroyImmediate(transform.GetChild(i).gameObject);
-    }
+    if (transform.childCount > 0) ClearChunks();
 
     // Debug.Log("Generating new chunks...");
     chunks = new Chunk[worldSize, worldSize];
@@ -47,12 +44,16 @@ public class World : MonoBehaviour
     // Debug.Log("Moving player...");
 
     int highest = 0;
-    for (int h = 0; h < chunks[0, 0].blocks.GetLength(2); h++)
+    for (int h = 0; h < chunks[0, 0].blockMap.GetLength(2); h++)
     {
-      if (chunks[0, 0].blocks[0, 0, h] != null) highest = h;
+      if (chunks[0, 0].blockMap[0, 0, h] != 0) highest = h;
     }
 
     player.transform.position = new Vector3(.5f, highest + .9f, .5f);
+
+    Debug.Log("Map Generated!");
+
+    GenerateMeshes();
   }
 
   float[,] GetNoise(float chunkX, float chunkY)
@@ -71,14 +72,24 @@ public class World : MonoBehaviour
     return noise;
   }
 
-  public void CombineMeshes()
+  public void GenerateMeshes()
   {
     for (int x = 0; x < chunks.GetLength(0); x++)
     {
       for (int y = 0; y < chunks.GetLength(1); y++)
       {
-        chunks[x, y].CombineMeshes();
+        chunks[x, y].GenerateMesh();
       }
+    }
+
+    Debug.Log("Meshes Generated!");
+  }
+
+  public void ClearChunks()
+  {
+    for (int i = transform.childCount - 1; i >= 0; i--)
+    {
+      DestroyImmediate(transform.GetChild(i).gameObject);
     }
   }
 

@@ -15,10 +15,9 @@ public class WorldEditor : Editor
     {
       world.Generate();
     }
-
-    if (GUILayout.Button("Combine Meshes"))
+    if (GUILayout.Button("Clear Chunks"))
     {
-      world.CombineMeshes();
+      world.ClearChunks();
     }
   }
 }
