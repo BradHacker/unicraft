@@ -116,28 +116,28 @@ public class Chunk
   {
     // ArrayList blockTypes = new ArrayList();
 
-    for (int x = 0; x < blockMap.GetLength(0); x++)
-    {
-      for (int y = 0; y < blockMap.GetLength(1); y++)
-      {
-        for (int h = 0; h < blockMap.GetLength(2); h++)
-        {
-          if (blockMap[x, y, h] != -1)
-          {
-            // if (!blockTypes.Contains(blockMap[x, y, h]))
-            // {
-            //   blockTypes.Add(blockMap[x, y, h]);
-            // }
+    // for (int x = 0; x < blockMap.GetLength(0); x++)
+    // {
+    //   for (int y = 0; y < blockMap.GetLength(1); y++)
+    //   {
+    //     for (int h = 0; h < blockMap.GetLength(2); h++)
+    //     {
+    //       if (blockMap[x, y, h] != -1)
+    //       {
+    //         // if (!blockTypes.Contains(blockMap[x, y, h]))
+    //         // {
+    //         //   blockTypes.Add(blockMap[x, y, h]);
+    //         // }
 
-            if (h == 0)
-            {
-              BoxCollider collider = gameObject.AddComponent<BoxCollider>();
-              collider.center = new Vector3(x + .5f, h - .5f, y + .5f);
-            }
-          }
-        }
-      }
-    }
+    //         if (h == 0)
+    //         {
+    //           BoxCollider collider = gameObject.AddComponent<BoxCollider>();
+    //           collider.center = new Vector3(x + .5f, h - .5f, y + .5f);
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     // int textureLength = 0;
     // if (blockTypes.Count == 1) textureLength = 1;

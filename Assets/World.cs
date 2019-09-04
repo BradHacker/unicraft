@@ -11,7 +11,7 @@ public class World : MonoBehaviour
   public int chunkHeight = 8;
   public int worldSize = 1;
 
-  [Range(.01f, .1f)]
+  [Range(.1f, 1f)]
   public float noiseScale = .05f;
   public NoiseSettings noiseSettings;
   public NoiseFilter noiseFilter;
@@ -19,7 +19,7 @@ public class World : MonoBehaviour
   public Player player;
 
   public Chunk[,] chunks;
-  Dictionary<Chunk, MeshCollider> colliders = new Dictionary<Chunk, MeshCollider>();
+  // Dictionary<Chunk, MeshCollider> colliders = new Dictionary<Chunk, MeshCollider>();
 
   public Texture2D masterTexture;
   Material masterMaterial;
@@ -45,6 +45,23 @@ public class World : MonoBehaviour
     masterMaterial.mainTexture = masterTexture;
     masterMaterial.SetFloat("_Mode", 3);
 
+    MeshColliderController.Initialize();
+
+    if (chunks != null && chunks.Length > 0)
+    {
+      for (int y = 0; y < worldSize; y++)
+      {
+        for (int x = 0; x < worldSize; x++)
+        {
+          // Debug.Log(chunks[x, y].GetMesh());
+          // MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+          // collider.sharedMesh = chunks[x, y].GetMesh();
+          // colliders[chunks[x, y]] = collider;
+          MeshColliderController.RemoveMeshCollider(chunks[x, y]);
+        }
+      }
+    }
+
     Debug.Log("Starting Map Generation...");
 
     if (transform.childCount > 0) ClearChunks();
@@ -69,10 +86,11 @@ public class World : MonoBehaviour
       {
         if (chunks[x, y].GetMesh() != null)
         {
-          Debug.Log(chunks[x, y].GetMesh());
-          MeshCollider collider = gameObject.AddComponent<MeshCollider>();
-          collider.sharedMesh = chunks[x, y].GetMesh();
-          colliders[chunks[x, y]] = collider;
+          // Debug.Log(chunks[x, y].GetMesh());
+          // MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+          // collider.sharedMesh = chunks[x, y].GetMesh();
+          // colliders[chunks[x, y]] = collider;
+          MeshColliderController.AddMeshCollider(chunks[x, y], chunks[x, y].GetMesh());
         }
         else
         {
@@ -107,7 +125,7 @@ public class World : MonoBehaviour
           float yCoord = (chunkY * chunkSize) + y;
           float hCoord = h;
 
-          noise[x, y, h] = noiseFilter.Evaluate(new Vector3(xCoord, hCoord, yCoord));
+          noise[x, y, h] = noiseFilter.Evaluate(new Vector3(xCoord * noiseScale, hCoord * noiseScale, yCoord * noiseScale));
         }
       }
     }
@@ -133,6 +151,8 @@ public class World : MonoBehaviour
     {
       DestroyImmediate(transform.GetChild(i).gameObject);
     }
+
+    MeshColliderController.ClearColliders();
   }
 
   private void OnDrawGizmos()
