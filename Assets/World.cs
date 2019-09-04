@@ -4,26 +4,46 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+  public int seed;
   [Range(8, 16)]
   public int chunkSize = 8;
   [Range(1, 100)]
   public int chunkHeight = 8;
   public int worldSize = 1;
-  public int seed;
 
-  Chunk[,] chunks;
+  [Range(.01f, .1f)]
+  public float noiseScale = .05f;
+  public NoiseSettings noiseSettings;
+  public NoiseFilter noiseFilter;
+
   public Player player;
+
+  public Chunk[,] chunks;
+  Dictionary<Chunk, MeshCollider> colliders = new Dictionary<Chunk, MeshCollider>();
+
+  public Texture2D masterTexture;
+  Material masterMaterial;
 
   void Start()
   {
     player = GameObject.Find("Player").GetComponent<Player>();
     // noise = new SimplexNoiseGenerator(seed);
+    Generate();
+  }
+
+  public World()
+  {
+    noiseSettings = new NoiseSettings();
+    noiseFilter = new NoiseFilter(seed, noiseSettings);
   }
 
   public void Generate()
   {
     // if (player == null) player = GameObject.Find("Player").GetComponent<Player>();
     // if (noise == null) noise = new SimplexNoiseGenerator(seed);
+    masterMaterial = new Material(Shader.Find("Standard"));
+    masterMaterial.mainTexture = masterTexture;
+    masterMaterial.SetFloat("_Mode", 3);
 
     Debug.Log("Starting Map Generation...");
 
@@ -37,7 +57,27 @@ public class World : MonoBehaviour
       for (int x = 0; x < worldSize; x++)
       {
         // Debug.Log("Chunk " + (y * worldSize + x) + "/" + (worldSize * worldSize) + " loaded...");
-        chunks[x, y] = new Chunk(chunkSize, chunkHeight, new Vector2(x, y), transform, GetNoise(x, y), seed);
+        chunks[x, y] = new Chunk(chunkSize, chunkHeight, new Vector2(x, y), transform, GetNoise(x, y), masterMaterial);
+      }
+    }
+
+    GenerateMeshes();
+
+    for (int y = 0; y < worldSize; y++)
+    {
+      for (int x = 0; x < worldSize; x++)
+      {
+        if (chunks[x, y].GetMesh() != null)
+        {
+          Debug.Log(chunks[x, y].GetMesh());
+          MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+          collider.sharedMesh = chunks[x, y].GetMesh();
+          colliders[chunks[x, y]] = collider;
+        }
+        else
+        {
+          Debug.Log("X: " + x + " Y: " + y);
+        }
       }
     }
 
@@ -46,27 +86,29 @@ public class World : MonoBehaviour
     int highest = 0;
     for (int h = 0; h < chunks[0, 0].blockMap.GetLength(2); h++)
     {
-      if (chunks[0, 0].blockMap[0, 0, h] != 0) highest = h;
+      if (chunks[0, 0].blockMap[0, 0, h] != -1) highest = h;
     }
 
     player.transform.position = new Vector3(.5f, highest + .9f, .5f);
 
     Debug.Log("Map Generated!");
-
-    GenerateMeshes();
   }
 
-  float[,] GetNoise(float chunkX, float chunkY)
+  float[,,] GetNoise(float chunkX, float chunkY)
   {
-    float[,] noise = new float[chunkSize, chunkSize];
-    for (int y = 0; y < chunkSize; y++)
+    float[,,] noise = new float[chunkSize, chunkSize, chunkHeight];
+    for (int x = 0; x < chunkSize; x++)
     {
-      for (int x = 0; x < chunkSize; x++)
+      for (int y = 0; y < chunkSize; y++)
       {
-        float xCoord = ((chunkX * chunkSize) + x) / (worldSize * chunkSize);
-        float yCoord = ((chunkY * chunkSize) + y) / (worldSize * chunkSize);
+        for (int h = 0; h < chunkHeight; h++)
+        {
+          float xCoord = (chunkX * chunkSize) + x;
+          float yCoord = (chunkY * chunkSize) + y;
+          float hCoord = h;
 
-        noise[x, y] = Mathf.PerlinNoise(xCoord, yCoord);
+          noise[x, y, h] = noiseFilter.Evaluate(new Vector3(xCoord, hCoord, yCoord));
+        }
       }
     }
     return noise;

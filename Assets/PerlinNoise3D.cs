@@ -4,7 +4,17 @@ using UnityEngine;
 
 public class PerlinNoise3D
 {
+  public static float Evaluate(Vector3 point)
+  {
+    return GetNoise(point.x, point.y, point.z);
+  }
+
   public static float Evaluate(float x, float y, float z)
+  {
+    return GetNoise(x, y, z);
+  }
+
+  static float GetNoise(float x, float y, float z)
   {
     float AB = Mathf.PerlinNoise(x, y);
     float BC = Mathf.PerlinNoise(y, z);
