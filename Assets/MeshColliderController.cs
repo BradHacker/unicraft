@@ -7,6 +7,7 @@ public static class MeshColliderController
   public static Dictionary<Chunk, MeshCollider> colliders = new Dictionary<Chunk, MeshCollider>();
   public static Queue<MeshCollider> colliderPool = new Queue<MeshCollider>();
   public static GameObject parent;
+  public static PhysicMaterial physicMaterial;
 
   public static void Initialize()
   {
@@ -18,6 +19,12 @@ public static class MeshColliderController
     {
       parent = new GameObject("Collider Controller");
     }
+
+    physicMaterial = new PhysicMaterial();
+    physicMaterial.bounciness = 0;
+    physicMaterial.dynamicFriction = 0;
+    physicMaterial.staticFriction = .6f;
+    physicMaterial.frictionCombine = PhysicMaterialCombine.Minimum;
   }
 
   public static void AddMeshCollider(Chunk chunk, Mesh mesh)
@@ -43,6 +50,7 @@ public static class MeshColliderController
       }
 
       collider.sharedMesh = mesh;
+      collider.material = physicMaterial;
       colliders.Add(chunk, collider);
     }
   }

@@ -12,6 +12,7 @@ public class Chunk
   int chunkSize;
   int height;
   float[,,] noiseMap;
+  float[,] surfaceMap;
 
   public int[,,] blockMap;
   int[,,][] faceMap;
@@ -21,12 +22,13 @@ public class Chunk
   MeshRenderer meshRenderer;
   Material masterMaterial;
 
-  public Chunk(int chunkSize, int height, Vector2 location, Transform worldTransform, float[,,] noiseMap, Material material)
+  public Chunk(int chunkSize, int height, Vector2 location, Transform worldTransform, float[,,] noiseMap, float[,] surfaceMap, Material material)
   {
     this.chunkSize = chunkSize;
     this.height = height;
     this.chunkOffset = location * chunkSize;
     this.noiseMap = noiseMap;
+    this.surfaceMap = surfaceMap;
     this.masterMaterial = material;
 
     gameObject = new GameObject("Chunk (" + location.x + "," + location.y + ")");
@@ -54,31 +56,26 @@ public class Chunk
       {
         for (int x = 0; x < chunkSize; x++)
         {
-          // if (h < (int)(surfaceMap[x, y] * height))
-          float sample = noiseMap[x, y, h];
-          if (noiseMap[x, y, h] > .515f)
+          blockMap[x, y, h] = -1;
+
+          if (h <= (int)surfaceMap[x, y] && Block.GetBlockFromNoise(1, noiseMap[x, y, h]) > -1)
           {
+            float sample = noiseMap[x, y, h];
+
             // float sample = PerlinNoise3D.Evaluate((chunkOffset.x + x) * noiseScale + noiseOffset, h * noiseScale + noiseOffset, (chunkOffset.y + y) * noiseScale + noiseOffset);
             if (sample > largest) largest = sample;
             if (sample < smallest) smallest = sample;
             // if (sample > .5f)
             // {
-            int blockId = 2;
-            if (noiseMap[x, y, h] > .52f) blockId = 1;
-
-            if (h == 0) blockId = 0;
+            int blockId = Block.GetBlockFromNoise(1, noiseMap[x, y, h]);
             // else if (h == (int)(surfaceMap[x, y] * height) - 1) blockId = 1;
 
             blockMap[x, y, h] = blockId;
+
+            if (h == (int)surfaceMap[x, y]) blockMap[x, y, h] = 1;
           }
-          else if (h == 0)
-          {
-            blockMap[x, y, h] = 0;
-          }
-          else
-          {
-            blockMap[x, y, h] = -1;
-          }
+
+          if (h == 0) blockMap[x, y, h] = 0;
         }
       }
     }
@@ -214,7 +211,7 @@ public class Chunk
                 vertices.Add(localUp / 2 + (0f - .5f) * xAxis + (1f - .5f) * zAxis + offset);
 
                 int localX = (blockTextureLength * id) % masterMaterial.mainTexture.width;
-                int localY = (blockTextureLength * id) / masterMaterial.mainTexture.width * originalSize;
+                int localY = ((blockTextureLength * id) / masterMaterial.mainTexture.width) * originalSize;
                 Vector2 uvOffset = new Vector2(localX + (f * 16), localY);
                 Vector2 adjustedUv0 = ((Block.faceUvMaps[f][0] * originalSize) + uvOffset) / new Vector2(textureSize * 6, textureSize);
                 Vector2 adjustedUv1 = ((Block.faceUvMaps[f][1] * originalSize) + uvOffset) / new Vector2(textureSize * 6, textureSize);

@@ -19,11 +19,14 @@ public class CameraController : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    transform.position = player.transform.position + offset;
-    if (transform.rotation.x > -90 && transform.rotation.x < 90)
+    if (!GameState.paused)
     {
+      transform.position = player.transform.position + offset;
+      // if (transform.rotation.eulerAngles.x > -90 && transform.rotation.eulerAngles.x < 90)
+      // {
       transform.Rotate(Input.GetAxis("Mouse Y") * -rotationVelocity, 0, 0);
+      // }
+      transform.Rotate(0, Input.GetAxis("Mouse X") * rotationVelocity, 0, Space.World);
     }
-    transform.Rotate(0, Input.GetAxis("Mouse X") * rotationVelocity, 0, Space.World);
   }
 }
