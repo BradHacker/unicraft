@@ -22,6 +22,10 @@ public class Chunk
   MeshRenderer meshRenderer;
   Material masterMaterial;
 
+  List<Vector3> vertices = new List<Vector3>();
+  List<Vector2> uvs = new List<Vector2>();
+  List<int> triangles = new List<int>();
+
   public Chunk(int chunkSize, int height, Vector2 location, Transform worldTransform, float[,,] noiseMap, float[,] surfaceMap, Material material)
   {
     this.chunkSize = chunkSize;
@@ -43,6 +47,7 @@ public class Chunk
     meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
     Initialize();
+    RecalculateFaces();
   }
 
   void Initialize()
@@ -82,7 +87,6 @@ public class Chunk
 
     // Debug.Log("Largest: " + largest);
     // Debug.Log("Smallest: " + smallest);
-    RecalculateFaces();
   }
 
   void RecalculateFaces()
@@ -109,77 +113,42 @@ public class Chunk
     }
   }
 
+  void UpdateFaceAtBlock(Vector3 blockPosition)
+  {
+    for (int x = (int)blockPosition.x - 1; x <= (int)blockPosition.x + 1; x++)
+    {
+      for (int y = (int)blockPosition.z - 1; y <= (int)blockPosition.z + 1; y++)
+      {
+        for (int h = (int)blockPosition.y; h <= (int)blockPosition.y + 1; h++)
+        {
+          if (x >= 0 && x < chunkSize && y >= 0 && y < chunkSize && h >= 0 && x < height)
+          {
+            if (blockMap[x, y, h] != -1)
+            {
+              faceMap[x, y, h] = new int[6] {
+                h < height - 1 ? blockMap[x, y, h + 1] : -1,
+                h > 0 ? blockMap[x, y, h - 1] : -1,
+                x > 0 ? blockMap[x - 1, y, h] : -1,
+                x < chunkSize - 1 ? blockMap[x + 1, y, h] : -1,
+                y < chunkSize - 1 ? blockMap[x, y + 1, h] : -1,
+                y > 0 ? blockMap[x, y - 1, h] : -1
+              };
+            }
+            else
+            {
+              faceMap[x, y, h] = null;
+            }
+          }
+        }
+      }
+    }
+  }
+
   public void GenerateMesh()
   {
-    // ArrayList blockTypes = new ArrayList();
-
-    // for (int x = 0; x < blockMap.GetLength(0); x++)
-    // {
-    //   for (int y = 0; y < blockMap.GetLength(1); y++)
-    //   {
-    //     for (int h = 0; h < blockMap.GetLength(2); h++)
-    //     {
-    //       if (blockMap[x, y, h] != -1)
-    //       {
-    //         // if (!blockTypes.Contains(blockMap[x, y, h]))
-    //         // {
-    //         //   blockTypes.Add(blockMap[x, y, h]);
-    //         // }
-
-    //         if (h == 0)
-    //         {
-    //           BoxCollider collider = gameObject.AddComponent<BoxCollider>();
-    //           collider.center = new Vector3(x + .5f, h - .5f, y + .5f);
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-
-    // int textureLength = 0;
-    // if (blockTypes.Count == 1) textureLength = 1;
-    // else if (blockTypes.Count < 5) textureLength = 2;
-    // else if (blockTypes.Count < 17) textureLength = 4;
-    // else if (blockTypes.Count < 65) textureLength = 8;
-
-    // // Combine the textures using block id and face index as a key
-    // Dictionary<Vector2, Vector2> textureFaceAtlas = new Dictionary<Vector2, Vector2>();
     int originalSize = 16;
     int blockTextureLength = originalSize * 6;
     int textureSize = masterMaterial.mainTexture.height;
-
-    // chunkTexture = new Texture2D(textureSize * 6, textureSize);
-    // chunkTexture.filterMode = FilterMode.Point;
-
-    // foreach (int id in blockTypes)
-    // {
-    //   // Debug.Log(id);
-    //   int localX = (blockTextureLength * id) % chunkTexture.width;
-    //   int localY = (blockTextureLength * id) / chunkTexture.width * originalSize;
-
-    //   for (int i = 0; i < 6; i++)
-    //   {
-    //     if (!textureFaceAtlas.ContainsKey(new Vector2(id, i)))
-    //     {
-    //       Texture2D baseTexture = Resources.Load("Textures/" + id) as Texture2D;
-    //       Texture2D sideTexture = Resources.Load("Textures/" + id + "_" + i) as Texture2D;
-
-    //       // Debug.Log(baseTexture);
-    //       // Debug.Log(sideTexture);
-
-    //       chunkTexture.SetPixels(localX + (i * 16), localY, 16, 16, (sideTexture != null ? sideTexture : baseTexture).GetPixels());
-
-    //       // Debug.Log("Id: " + id + " Face: " + i + " | " + (localX + (i * 16)) + "," + localY);
-
-    //       textureFaceAtlas.Add(new Vector2(id, i), new Vector2(localX + (i * 16), localY));
-    //     }
-    //   }
-    // }
-    // chunkTexture.Apply();
-
-    List<Vector3> vertices = new List<Vector3>();
-    List<Vector2> uvs = new List<Vector2>();
-    List<int> triangles = new List<int>();
 
     int vertexIndex = 0;
     int triangleIndex = 0;
@@ -190,10 +159,10 @@ public class Chunk
       {
         for (int h = 0; h < faceMap.GetLength(2); h++)
         {
-          if (faceMap[x, y, h] != null)
-          {
-            int id = blockMap[x, y, h];
+          int id = blockMap[x, y, h];
 
+          if (id != -1 && faceMap[x, y, h] != null)
+          {
             for (int f = 0; f < faceMap[x, y, h].Length; f++)
             {
               if (faceMap[x, y, h][f] == -1)
@@ -238,8 +207,9 @@ public class Chunk
       }
     }
 
-    // Debug.Log(vertices[0].x + "," + vertices[0].y + "," + vertices[0].z);
+    // Debug.Log("Vertices: " + vertices.ToArray().Length + " | Triangles: " + triangles.ToArray().Length);
 
+    // chunkMesh.Clear();
     chunkMesh.vertices = vertices.ToArray();
     chunkMesh.triangles = triangles.ToArray();
     chunkMesh.uv = uvs.ToArray();
@@ -248,11 +218,34 @@ public class Chunk
     meshFilter.sharedMesh = chunkMesh;
     meshRenderer.material = masterMaterial;
 
+    MeshColliderController.AddMeshCollider(this, chunkMesh);
+
     // Resources.UnloadUnusedAssets();
   }
 
   public Mesh GetMesh()
   {
     return chunkMesh;
+  }
+
+  void ClearMesh()
+  {
+    chunkMesh.Clear();
+    vertices.Clear();
+    uvs.Clear();
+    triangles.Clear();
+    MeshColliderController.RemoveMeshCollider(this);
+  }
+
+  public void BreakBlockAtPoint(Vector3 worldPoint)
+  {
+    ClearMesh();
+    Vector3 chunkPoint = new Vector3((int)worldPoint.x % chunkSize, worldPoint.y, (int)worldPoint.z % chunkSize);
+    // Debug.Log("Chunk Point: " + chunkPoint);
+    // Debug.Log("Block To Break: " + blockMap[(int)chunkPoint.x, (int)chunkPoint.z, (int)chunkPoint.y]);
+    blockMap[(int)chunkPoint.x, (int)chunkPoint.z, (int)chunkPoint.y] = -1;
+    // UpdateFaceAtBlock(chunkPoint);
+    RecalculateFaces();
+    GenerateMesh();
   }
 }

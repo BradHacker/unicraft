@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
   public KeyCode moveLeft;
   public KeyCode moveRight;
   public KeyCode moveJump;
+  public int breakBlockButton;
 
   public float movementVelocity = 5;
   float movementForce;
@@ -26,6 +27,9 @@ public class Player : MonoBehaviour
   public float rotationVelocity = 2;
 
   public float velocityLimit = 10;
+
+  public float jumpRayMaxDist = 1.5f;
+  public float maxInterationDistance = 8;
 
   private void OnValidate()
   {
@@ -75,9 +79,6 @@ public class Player : MonoBehaviour
 
     if (!GameState.paused)
     {
-      // Vector3 rotateVector = new Vector3(0, 0, 0);
-      // rotateVector.y += Input.GetAxis("Mouse X");
-      // playerRigidbody.AddTorque(0, Input.GetAxis("Mouse X"), 0);
       gameObject.transform.Rotate(0, Input.GetAxis("Mouse X") * rotationVelocity, 0);
 
       if (Input.GetKey(moveForward))
@@ -88,10 +89,6 @@ public class Player : MonoBehaviour
       {
         playerRigidbody.transform.position += transform.forward * -movementVelocity;
       }
-      // if (Input.GetKeyUp(moveForward) || Input.GetKeyUp(moveBackward))
-      // {
-      //   playerRigidbody.velocity = new Vector3(playerRigidbody.velocity.x, playerRigidbody.velocity.y, 0);
-      // }
 
       if (Input.GetKey(moveLeft))
       {
@@ -101,10 +98,6 @@ public class Player : MonoBehaviour
       {
         playerRigidbody.transform.position += transform.right * movementVelocity;
       }
-      // if (Input.GetKeyUp(moveLeft) || Input.GetKey(moveRight))
-      // {
-      //   playerRigidbody.velocity = new Vector3(0, playerRigidbody.velocity.y, playerRigidbody.velocity.z);
-      // }
 
       if (Input.GetKeyDown(moveJump) && IsOnGround())
       {
@@ -116,11 +109,21 @@ public class Player : MonoBehaviour
         playerRigidbody.AddForce(-(playerRigidbody.velocity - new Vector3(velocityLimit, velocityLimit, velocityLimit)));
       }
 
-      // if (playerRigidbody.velocity.magnitude > movementVelocity)
-      // {
-      //   Vector3 clampedVelocity = playerRigidbody.velocity.normalized * movementVelocity;
-      //   playerRigidbody.velocity = clampedVelocity;
-      // }
+      if (Input.GetMouseButtonDown(breakBlockButton))
+      {
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (Physics.Raycast(ray, out hit, maxInterationDistance))
+        {
+          if (hit.point != null)
+          {
+            // Debug.Log(hit.point);
+            World world = GameObject.Find("World").GetComponent<World>();
+            world.BreakBlockAtPoint(hit.point);
+          }
+        }
+      }
     }
   }
 
@@ -130,7 +133,7 @@ public class Player : MonoBehaviour
     Vector3 frontLeft = playerRigidbody.transform.position + (playerRigidbody.transform.forward * size.z / 2) + (-playerRigidbody.transform.right * size.x / 2);
     Vector3 backRight = playerRigidbody.transform.position + (-playerRigidbody.transform.forward * size.z / 2) + (playerRigidbody.transform.right * size.x / 2);
     Vector3 backLeft = playerRigidbody.transform.position + (-playerRigidbody.transform.forward * size.z / 2) + (-playerRigidbody.transform.right * size.x / 2);
-    return Physics.Raycast(frontRight, -Vector3.up, 1) || Physics.Raycast(frontLeft, -Vector3.up, 1) || Physics.Raycast(backRight, -Vector3.up, 1) || Physics.Raycast(backLeft, -Vector3.up, 1);
+    return Physics.Raycast(frontRight, -Vector3.up, jumpRayMaxDist) || Physics.Raycast(frontLeft, -Vector3.up, jumpRayMaxDist) || Physics.Raycast(backRight, -Vector3.up, jumpRayMaxDist) || Physics.Raycast(backLeft, -Vector3.up, jumpRayMaxDist);
   }
 
   // public void OnDrawGizmos()

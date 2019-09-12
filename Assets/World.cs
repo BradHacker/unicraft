@@ -90,24 +90,24 @@ public class World : MonoBehaviour
 
     GenerateMeshes();
 
-    for (int y = 0; y < worldSize; y++)
-    {
-      for (int x = 0; x < worldSize; x++)
-      {
-        if (chunks[x, y].GetMesh() != null)
-        {
-          // Debug.Log(chunks[x, y].GetMesh());
-          // MeshCollider collider = gameObject.AddComponent<MeshCollider>();
-          // collider.sharedMesh = chunks[x, y].GetMesh();
-          // colliders[chunks[x, y]] = collider;
-          MeshColliderController.AddMeshCollider(chunks[x, y], chunks[x, y].GetMesh());
-        }
-        else
-        {
-          Debug.Log("X: " + x + " Y: " + y);
-        }
-      }
-    }
+    // for (int y = 0; y < worldSize; y++)
+    // {
+    //   for (int x = 0; x < worldSize; x++)
+    //   {
+    //     if (chunks[x, y].GetMesh() != null)
+    //     {
+    //       // Debug.Log(chunks[x, y].GetMesh());
+    //       // MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+    //       // collider.sharedMesh = chunks[x, y].GetMesh();
+    //       // colliders[chunks[x, y]] = collider;
+    //       MeshColliderController.AddMeshCollider(chunks[x, y], chunks[x, y].GetMesh());
+    //     }
+    //     else
+    //     {
+    //       Debug.Log("X: " + x + " Y: " + y);
+    //     }
+    //   }
+    // }
 
     // Debug.Log("Moving player...");
 
@@ -179,6 +179,21 @@ public class World : MonoBehaviour
     }
 
     MeshColliderController.ClearColliders();
+  }
+
+  public void BreakBlockAtPoint(Vector3 worldPoint)
+  {
+    Vector2 chunkPosition = WorldPointToChunk(worldPoint);
+    // Debug.Log(chunkPoint);
+    chunks[(int)chunkPosition.x, (int)chunkPosition.y].BreakBlockAtPoint(worldPoint);
+  }
+
+  public Vector2 WorldPointToChunk(Vector3 point)
+  {
+    int chunkX = (int)point.x / chunkSize;
+    int chunkY = (int)point.z / chunkSize;
+
+    return new Vector3(chunkX, chunkY);
   }
 
   private void OnDrawGizmos()
